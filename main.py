@@ -25,9 +25,8 @@ class Node:
         self.heuristic = heuristic
 
 
-
-
 def manhattan_distance(current_position):
+    # returns the manhattan distance of a state
     final_coords = {0:[1,1], 1:[0,0], 2:[0,1], 3:[0,2], 4:[1,2], 5:[2,2], 6:[2,1], 7:[2,0], 8:[1,0]}
     total = 0
     for i in range(9):
@@ -42,20 +41,49 @@ def manhattan_distance(current_position):
     return total
 
 def generate_children(current_node, open_list):
-    state = current_node.state
+    # generates 4 new nodes with states based on the current state
+    # the new nodes will have their parent sent to current_node
+    state = current_node.state.copy()
+    # get the position of the blank spot (which has a value of 0)
     for i in range(3):
         for j in range(3):
             if state[i][j] == 0:
                 x = i
                 y = j
-    for i in range(4):
-        new_state = state
-        try:
-            new_state[x][y], new_state[x+1][y] = new_state[x+1][y], new_state[x][y]
-            open_list.append(Node(new_state, cost=current_node.cost + new_state[x][y], heuristic=manhattan_distance(new_state),
-            parent=current_node))
-        except IndexError:
-            continue
+                print("found empty spot at: {0} {1}".format(x, y))
+    new_state = state.copy()
+    try: 
+        new_state[x][y], new_state[x+1][y] = new_state[x+1][y], new_state[x][y]
+        open_list.append(Node(new_state, cost=current_node.cost + new_state[x][y], heuristic=manhattan_distance(new_state),
+        parent=current_node))
+        new_state[x+1][y], new_state[x][y] = new_state[x][y], new_state[x+1][y]
+    except IndexError:
+        pass
+    
+    try:
+        new_state[x][y], new_state[x-1][y] = new_state[x-1][y], new_state[x][y]
+        open_list.append(Node(new_state, cost=current_node.cost + new_state[x][y], heuristic=manhattan_distance(new_state),
+        parent=current_node))
+        new_state[x-1][y], new_state[x][y] = new_state[x][y], new_state[x-1][y]
+    except IndexError:
+        pass
+
+    try:
+        new_state[x][y], new_state[x][y+1] = new_state[x][y+1], new_state[x][y]
+        open_list.append(Node(new_state, cost=current_node.cost + new_state[x][y], heuristic=manhattan_distance(new_state),
+        parent=current_node))
+        new_state[x][y+1], new_state[x][y] = new_state[x][y], new_state[x][y+1]
+    except IndexError:
+        pass
+
+    try:
+        new_state[x][y], new_state[x][y-1] = new_state[x][y-1], new_state[x][y]
+        open_list.append(Node(new_state, cost=current_node.cost + new_state[x][y], heuristic=manhattan_distance(new_state),
+        parent=current_node))
+        new_state[x][y-1], new_state[x][y] = new_state[x][y], new_state[x][y-1]
+    except IndexError:
+        pass
+
         
 
 
@@ -66,9 +94,9 @@ def main():
     with open('positions.txt', 'r') as infile:
         for line in infile:
             initial_state.append([int(x) for x in line.split()])
-    
-    open_list.append(Node(initial_state, cost=0, heuristic=manhattan_distance(initial_state)))
-    print(manhattan_distance(open_list[0]))
+    open_list.append(Node(state=initial_state, cost=0, heuristic=manhattan_distance(initial_state)))
+    generate_children(open_list[0], open_list)
+
 
 main()
 

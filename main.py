@@ -1,90 +1,129 @@
-# make an openlist containing only the starting node
-#    make an empty closed list
-#    while (the destination node has not been reached):
-#        consider the node with the lowest f score in the open list
-#        if (this node is our destination node) :
-#            we are finished 
-#        if not:
-#            put the current node in the closed list and look at all of its neighbors
-#            for (each neighbor of the current node):
-#                if (neighbor has lower g value than current and is in the closed list) :
-#                    replace the neighbor with the new, lower, g value 
-#                    current node is now the neighbor's parent            
-#                else if (current g value is lower and this neighbor is in the open list ) :
-#                    replace the neighbor with the new, lower, g value 
-#                    change the neighbor's parent to our current node
-
-#                else if this neighbor is not in both lists:
-#                    add it to the open list and set its g
+import copy
 
 class Node:
-    def __init__(self, state, cost=None, heuristic=None, parent=None):
-        self.state = state
+    def __init__(self, state, cost=None, heuristic=None, parent=None, total=None):
+        self.state = state.copy()
         self.parent = parent
         self.cost = cost
         self.heuristic = heuristic
 
+        # this is used to find the cheapest node
+        if total is None:
+            self.total = self.cost + self.heuristic
+        else:
+            self.total = total
 
-def manhattan_distance(current_position):
-    # returns the manhattan distance of a state
-    final_coords = {0:[1,1], 1:[0,0], 2:[0,1], 3:[0,2], 4:[1,2], 5:[2,2], 6:[2,1], 7:[2,0], 8:[1,0]}
-    total = 0
-    for i in range(9):
+def heuristic_func(current_position):
+    # returns the out of position tiles in the puzzle
+    counter = 0
+    final = [[1,2,3], [8,0,4], [7,6,5]]
+    for i in range(3):
         for j in range(3):
-            for k in range(3):
-                if current_position[j][k] == i:
-                    x = j
-                    y = k
-                    x_final = final_coords[i][0]
-                    y_final = final_coords[i][1]
-                    total += abs(x - x_final) + abs(y - y_final)
-    return total
+            if current_position[i][j] != final[i][j]:
+                counter += 1
+    return counter
 
-def generate_children(current_node, open_list):
+def generate_children(current_node):
+    open_list = []
     # generates 4 new nodes with states based on the current state
-    # the new nodes will have their parent sent to current_node
-    state = current_node.state.copy()
+    # the new nodes will have their parent set to current_node
+    state = copy.deepcopy(current_node.state)
     # get the position of the blank spot (which has a value of 0)
     for i in range(3):
         for j in range(3):
             if state[i][j] == 0:
                 x = i
                 y = j
-                print("found empty spot at: {0} {1}".format(x, y))
-    new_state = state.copy()
+    new_state = copy.deepcopy(state)
     try: 
         new_state[x][y], new_state[x+1][y] = new_state[x+1][y], new_state[x][y]
-        open_list.append(Node(new_state, cost=current_node.cost + new_state[x][y], heuristic=manhattan_distance(new_state),
+        node_state = copy.deepcopy(new_state)
+        open_list.append(Node(copy.deepcopy(node_state), cost=current_node.cost + node_state[x][y], heuristic=heuristic_func(copy.deepcopy(node_state)),
         parent=current_node))
         new_state[x+1][y], new_state[x][y] = new_state[x][y], new_state[x+1][y]
     except IndexError:
         pass
     
     try:
-        new_state[x][y], new_state[x-1][y] = new_state[x-1][y], new_state[x][y]
-        open_list.append(Node(new_state, cost=current_node.cost + new_state[x][y], heuristic=manhattan_distance(new_state),
-        parent=current_node))
-        new_state[x-1][y], new_state[x][y] = new_state[x][y], new_state[x-1][y]
+        if x-1 >= 0:
+            new_state[x][y], new_state[x-1][y] = new_state[x-1][y], new_state[x][y]
+            node_state = copy.deepcopy(new_state)
+            open_list.append(Node(copy.deepcopy(node_state), cost=current_node.cost + node_state[x][y], heuristic=heuristic_func(copy.deepcopy(node_state)),
+            parent=current_node))
+            new_state[x-1][y], new_state[x][y] = new_state[x][y], new_state[x-1][y]
     except IndexError:
         pass
 
     try:
         new_state[x][y], new_state[x][y+1] = new_state[x][y+1], new_state[x][y]
-        open_list.append(Node(new_state, cost=current_node.cost + new_state[x][y], heuristic=manhattan_distance(new_state),
+        node_state = copy.deepcopy(new_state)
+        open_list.append(Node(copy.deepcopy(node_state), cost=current_node.cost + node_state[x][y], heuristic=heuristic_func(copy.deepcopy(node_state)),
         parent=current_node))
         new_state[x][y+1], new_state[x][y] = new_state[x][y], new_state[x][y+1]
     except IndexError:
         pass
 
     try:
-        new_state[x][y], new_state[x][y-1] = new_state[x][y-1], new_state[x][y]
-        open_list.append(Node(new_state, cost=current_node.cost + new_state[x][y], heuristic=manhattan_distance(new_state),
-        parent=current_node))
-        new_state[x][y-1], new_state[x][y] = new_state[x][y], new_state[x][y-1]
+        if y-1 >= 0:
+            new_state[x][y], new_state[x][y-1] = new_state[x][y-1], new_state[x][y]
+            node_state = copy.deepcopy(new_state)
+            open_list.append(Node(copy.deepcopy(node_state), cost=current_node.cost + node_state[x][y], heuristic=heuristic_func(copy.deepcopy(node_state)),
+            parent=current_node))
+            new_state[x][y-1], new_state[x][y] = new_state[x][y], new_state[x][y-1]
     except IndexError:
         pass
 
-        
+    return open_list
+
+def sort_function(node):
+    return node.total
+
+def find_solution(open_list=None, final_state=None):
+    closed_list = []
+    # while open list is not 0
+    current_node = open_list[0]
+    found_better_open = False
+    found_better_closed = False
+    while len(open_list) != 0:
+        print("Checking the state:")
+        for i in current_node.state:
+            print(i)
+        # pop the first element in the open list
+        open_list = open_list[1:]
+
+        if current_node.state == final_state:
+            print("Final position reached with a total cost of: {0}".format(current_node.total))
+            break
+
+        children = generate_children(current_node)
+        for i in children:
+
+            # else if a similar state is found in open list with a lower cost, continue
+            for j in open_list:
+                if j.state == i.state:
+                    if j.total < i.total:
+                        found_better_open = True
+                        break
+
+            # else if a similar state is found in the closed list with a lower cost, continue
+            for k in closed_list:
+                if k.state == i.state:
+                    if k.total < i.total:
+                        found_better_closed = True
+                        break    
+            
+            if found_better_open is False and found_better_closed is False:
+                open_list.append(i)
+
+                
+            found_better_closed = False
+            found_better_open = False
+
+
+        closed_list.append(current_node)
+        # find the node in the open list with the smallest total value f(n) = g(n) + h(n)
+        open_list.sort(key=sort_function)
+        current_node = open_list[0]
 
 
 def main():
@@ -94,11 +133,12 @@ def main():
     with open('positions.txt', 'r') as infile:
         for line in infile:
             initial_state.append([int(x) for x in line.split()])
-    open_list.append(Node(state=initial_state, cost=0, heuristic=manhattan_distance(initial_state)))
-    generate_children(open_list[0], open_list)
+    open_list.append(Node(state=initial_state, cost=0, total=0, heuristic=heuristic_func(initial_state)))
 
+    find_solution(open_list=open_list, final_state=final_state)
 
-main()
+if __name__ == '__main__':
+    main()
 
 
 

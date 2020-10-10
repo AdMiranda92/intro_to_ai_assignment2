@@ -7,7 +7,7 @@ class Node:
         self.cost = cost
         self.heuristic = heuristic
 
-        # this is used to find the cheapest node
+        # this is used to find the cheapest node and for sorting the list of nodes
         if total is None:
             self.total = self.cost + self.heuristic
         else:
@@ -15,6 +15,8 @@ class Node:
 
 def heuristic_func(current_position):
     # returns the out of position tiles in the puzzle
+    # this will be used as the heuristic for how far away a state is from 
+    # the final state
     counter = 0
     final = [[1,2,3], [8,0,4], [7,6,5]]
     for i in range(3):
@@ -35,6 +37,10 @@ def generate_children(current_node):
                 x = i
                 y = j
     new_state = copy.deepcopy(state)
+
+    # this following section is used to generate the 4 children of the node 
+    # while taking into account illegal moves - at most, 4 children will be generated
+    # but less than 4 could be generated depending on current state
     try: 
         new_state[x][y], new_state[x+1][y] = new_state[x+1][y], new_state[x][y]
         node_state = copy.deepcopy(new_state)
@@ -80,7 +86,7 @@ def sort_function(node):
 
 def find_solution(open_list=None, final_state=None):
     closed_list = []
-    # while open list is not 0
+    # pop the node from the open list, only one node should be in the list at this point
     current_node = open_list[0]
     found_better_open = False
     found_better_closed = False
@@ -112,10 +118,11 @@ def find_solution(open_list=None, final_state=None):
                         found_better_closed = True
                         break    
             
+            # if no state was found to exclude the current child, add it to the open list
             if found_better_open is False and found_better_closed is False:
                 open_list.append(i)
 
-                
+            # reset the found booleans    
             found_better_closed = False
             found_better_open = False
 
@@ -129,7 +136,11 @@ def find_solution(open_list=None, final_state=None):
 def main():
     open_list = []
     initial_state = []
+    # set the final state for the 8 puzzle
     final_state = [[1,2,3], [8,0,4], [7,6,5]]
+    # get the initial state from the positions file
+    # FOR PROFESSOR/GRADER - PLEASE ENSURE THE FILE IS IN THE PROPER DIRECTORY OR CHANGE THE FILE NAME
+    # TO INCLUDE FULL PATH, THIS IS THE ONLY THING YOU HAVE TO DO TO PROPERLY RUN MY CODE
     with open('positions.txt', 'r') as infile:
         for line in infile:
             initial_state.append([int(x) for x in line.split()])
